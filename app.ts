@@ -35,7 +35,7 @@ app.get("/users", async (req: Request, res: Response): Promise<void> => {
     const response = await axios.get("https://jsonplaceholder.typicode.com/users");
     res.send(response.data);
   } catch (error) {
-    res.status(500).send({ message: "Error fetching users" });
+    res.send({ success: false });
   }
 });
 
@@ -81,7 +81,7 @@ app.get("/posts/:userId", async (req: Request, res: Response): Promise<void> => 
 
     connection.end();
   } catch (error) {
-    res.status(500).send({ message: "Error fetching posts" });
+    res.send({ success: false });
   }
 });
 
@@ -95,7 +95,7 @@ app.delete("/posts/:id", async (req: Request, res: Response): Promise<void> => {
 
     res.send({ success: true });
   } catch (error) {
-    res.status(500).send({ message: "Error deleting post" });
+    res.send({ success: false });
   }
 });
 

@@ -44,7 +44,7 @@ app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.send(response.data);
     }
     catch (error) {
-        res.status(500).send({ message: "Error fetching users" });
+        res.send({ success: false });
     }
 }));
 app.get("/posts/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -83,7 +83,7 @@ app.get("/posts/:userId", (req, res) => __awaiter(void 0, void 0, void 0, functi
         connection.end();
     }
     catch (error) {
-        res.status(500).send({ message: "Error fetching posts" });
+        res.send({ success: false });
     }
 }));
 app.delete("/posts/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -94,7 +94,7 @@ app.delete("/posts/:id", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.send({ success: true });
     }
     catch (error) {
-        res.status(500).send({ message: "Error deleting post" });
+        res.send({ success: false });
     }
 }));
 const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
