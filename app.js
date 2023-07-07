@@ -54,14 +54,16 @@ app.get("/posts/:userId", (req, res) => __awaiter(void 0, void 0, void 0, functi
     try {
         const connection = yield createConnection();
         yield createPostsTable(connection);
-        const offset = (pageNumber - 1) * pageSize;
+        const [totalCount] = yield connection.execute("SELECT COUNT(*) as count FROM posts WHERE userId = ?", [userId]);
+        const total = totalCount[0].count;
+        const maxPage = Math.ceil(total / pageSize);
+        const validPageNumber = Math.max(1, Math.min(pageNumber, maxPage));
+        const offset = (validPageNumber - 1) * pageSize;
         const [rows] = yield connection.execute("SELECT * FROM posts WHERE userId = ? LIMIT ? OFFSET ?", [
             userId,
             pageSize,
             offset
         ]);
-        const [totalCount] = yield connection.execute("SELECT COUNT(*) as count FROM posts WHERE userId = ?", [userId]);
-        const total = totalCount[0].count;
         if (rows.length > 0) {
             res.send({ posts: rows, total });
         }

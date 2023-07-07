@@ -48,16 +48,18 @@ app.get("/posts/:userId", async (req: Request, res: Response): Promise<void> => 
     const connection: Connection = await createConnection();
     await createPostsTable(connection);
 
-    const offset: number = (pageNumber - 1) * pageSize;
+    const [totalCount] = await connection.execute<RowDataPacket[]>("SELECT COUNT(*) as count FROM posts WHERE userId = ?", [userId]);
+    const total: number = totalCount[0].count;
+
+    const maxPage = Math.ceil(total / pageSize);
+    const validPageNumber = Math.max(1, Math.min(pageNumber, maxPage));
+    const offset = (validPageNumber - 1) * pageSize;
+
     const [rows] = await connection.execute<RowDataPacket[]>("SELECT * FROM posts WHERE userId = ? LIMIT ? OFFSET ?", [
       userId,
       pageSize,
       offset
     ]);
-
-    const [totalCount] = await connection.execute<RowDataPacket[]>("SELECT COUNT(*) as count FROM posts WHERE userId = ?", [userId]);
-
-    const total: number = totalCount[0].count;
 
     if (rows.length > 0) {
       res.send({ posts: rows, total });
