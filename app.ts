@@ -1,9 +1,12 @@
-import express, { Request, Response, Router } from "express";
+import express, { Request, Response } from "express";
 import axios from "axios";
-import mysql, { Connection } from "mysql2/promise";
+import cors from "cors";
+import mysql, { Connection, RowDataPacket } from "mysql2/promise";
 
 const app = express();
 const serverPort = 9777;
+
+app.use(cors());
 
 const createConnection = async (): Promise<Connection> => {
   const connection = await mysql.createConnection({
@@ -12,6 +15,7 @@ const createConnection = async (): Promise<Connection> => {
     password: "mysecretpassword",
     database: "my_database"
   });
+
   return connection;
 };
 
@@ -35,21 +39,33 @@ app.get("/users", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-app.get("/users/:userId/posts", async (req: Request, res: Response): Promise<void> => {
+app.get("/posts/:userId", async (req: Request, res: Response): Promise<void> => {
   const userId: string = req.params.userId;
+  const pageNumber: number = Number(req.query.pageNumber) || 1;
+  const pageSize: number = Number(req.query.pageSize) || 4;
 
-  const connection: Connection = await createConnection();
-  await createPostsTable(connection);
-  const [rows] = await connection.execute("SELECT * FROM posts WHERE userId = ?", [userId]);
+  try {
+    const connection: Connection = await createConnection();
+    await createPostsTable(connection);
 
-  if (rows.length > 0) {
-    res.send(rows);
-  } else {
-    try {
+    const offset: number = (pageNumber - 1) * pageSize;
+    const [rows] = await connection.execute<RowDataPacket[]>("SELECT * FROM posts WHERE userId = ? LIMIT ? OFFSET ?", [
+      userId,
+      pageSize,
+      offset
+    ]);
+
+    const [totalCount] = await connection.execute<RowDataPacket[]>("SELECT COUNT(*) as count FROM posts WHERE userId = ?", [userId]);
+
+    const total: number = totalCount[0].count;
+
+    if (rows.length > 0) {
+      res.send({ posts: rows, total });
+    } else {
       const response = await axios.get(`https://jsonplaceholder.typicode.com/posts?userId=${userId}`);
+      const posts = response.data.slice(offset, offset + pageSize);
 
-      const posts = response.data;
-      for (const post of posts) {
+      for (const post of response.data) {
         await connection.execute("INSERT INTO posts (id, userId, title, body) VALUES (?, ?, ?, ?)", [
           post.id,
           post.userId,
@@ -58,10 +74,26 @@ app.get("/users/:userId/posts", async (req: Request, res: Response): Promise<voi
         ]);
       }
 
-      res.send(posts);
-    } catch (error) {
-      res.status(500).send({ message: "Error fetching posts" });
+      res.send({ posts: posts, total: response.data.length });
     }
+
+    connection.end();
+  } catch (error) {
+    res.status(500).send({ message: "Error fetching posts" });
+  }
+});
+
+app.delete("/posts/:id", async (req: Request, res: Response): Promise<void> => {
+  const postId: number = Number(req.params.id);
+
+  const connection: Connection = await createConnection();
+
+  try {
+    await connection.execute("DELETE FROM posts WHERE id = ?", [postId]);
+
+    res.send({ success: true });
+  } catch (error) {
+    res.status(500).send({ message: "Error deleting post" });
   }
 });
 
