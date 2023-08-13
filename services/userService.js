@@ -12,27 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const sqlHandler_1 = require("./services/sqlHandler");
-const app = (0, express_1.default)();
-const serverPort = 9777;
-app.use((0, cors_1.default)());
-app.use('/users', require('./routes/userRoutes'));
-app.use('/posts', require('./routes/postsRoutes'));
-const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
+exports.getUsers = void 0;
+const axios_1 = __importDefault(require("axios"));
+const getUsers = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield (0, sqlHandler_1.createConnection)();
-        app.listen(serverPort, () => {
-            console.log(`Server is running on port => ${serverPort}`);
-        });
-        const connection = yield (0, sqlHandler_1.createConnection)();
-        if (connection)
-            console.log('Connected to DB');
+        const response = yield axios_1.default.get("https://jsonplaceholder.typicode.com/users");
+        return response.data;
     }
     catch (error) {
-        console.log(error);
+        return { success: false };
     }
 });
-startServer();
-module.exports = app;
+exports.getUsers = getUsers;

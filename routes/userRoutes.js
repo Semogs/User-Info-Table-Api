@@ -13,26 +13,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const sqlHandler_1 = require("./services/sqlHandler");
-const app = (0, express_1.default)();
-const serverPort = 9777;
-app.use((0, cors_1.default)());
-app.use('/users', require('./routes/userRoutes'));
-app.use('/posts', require('./routes/postsRoutes'));
-const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield (0, sqlHandler_1.createConnection)();
-        app.listen(serverPort, () => {
-            console.log(`Server is running on port => ${serverPort}`);
-        });
-        const connection = yield (0, sqlHandler_1.createConnection)();
-        if (connection)
-            console.log('Connected to DB');
-    }
-    catch (error) {
-        console.log(error);
-    }
-});
-startServer();
-module.exports = app;
+const userService_1 = require("../services/userService");
+const userRouter = express_1.default.Router();
+userRouter.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const ans = yield (0, userService_1.getUsers)();
+    res.send(ans);
+}));
+module.exports = userRouter;

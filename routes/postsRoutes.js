@@ -13,26 +13,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const sqlHandler_1 = require("./services/sqlHandler");
-const app = (0, express_1.default)();
-const serverPort = 9777;
-app.use((0, cors_1.default)());
-app.use('/users', require('./routes/userRoutes'));
-app.use('/posts', require('./routes/postsRoutes'));
-const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        yield (0, sqlHandler_1.createConnection)();
-        app.listen(serverPort, () => {
-            console.log(`Server is running on port => ${serverPort}`);
-        });
-        const connection = yield (0, sqlHandler_1.createConnection)();
-        if (connection)
-            console.log('Connected to DB');
-    }
-    catch (error) {
-        console.log(error);
-    }
-});
-startServer();
-module.exports = app;
+const postService_1 = require("../services/postService");
+const postsRouter = express_1.default.Router();
+postsRouter.get('/:userId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.userId;
+    const pageNumber = Number(req.query.pageNumber) || 1;
+    const pageSize = Number(req.query.pageSize) || 4;
+    const ans = yield (0, postService_1.getPosts)(userId, pageNumber, pageSize);
+    res.send(ans);
+}));
+postsRouter.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const postId = Number(req.params.id);
+    const ans = yield (0, postService_1.deletePost)(postId);
+    res.send(ans);
+}));
+module.exports = postsRouter;
